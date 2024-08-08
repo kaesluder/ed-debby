@@ -4,7 +4,11 @@ use std::error::Error;
 use std::env;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let _config = parse_args(env::args_os().collect())?;
+    let config = parse_args(env::args_os().collect())?;
+
+    if config.help {
+        return Ok(());
+    }
 
     Ok(())
 }
