@@ -1,0 +1,5 @@
+(A) 1. Buffer create
+(A) 2. Buffer load
+(A) 3. Buffer save
+(A) 4. Character count
+(B) Add logic for command-line arg error feedback
