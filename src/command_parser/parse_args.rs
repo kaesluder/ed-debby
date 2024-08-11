@@ -54,7 +54,10 @@ pub fn parse_args(arg_list: Vec<OsString>) -> Result<EdArgs, pico_args::Error> {
     // Help has a higher priority and should be handled separately.
     if pargs.contains(["-h", "--help"]) {
         print!("{}", HELP);
-        return Ok(EdArgs{help: true, ..Default::default()});
+        return Ok(EdArgs {
+            help: true,
+            ..Default::default()
+        });
     }
 
     let args = EdArgs {
@@ -86,7 +89,7 @@ mod tests {
         let result = parse_args(test_args);
         assert!(result.is_ok());
     }
- 
+
     #[test]
     fn test_filename() {
         let test_args = vec!["ed", "/tmp/foo"].iter().map(OsString::from).collect();
@@ -107,20 +110,18 @@ mod tests {
 
     #[rstest]
     // args[0] is the program name, so we don't test it.
-    // add additional args in the format used by shell (separated by whitespace) 
+    // add additional args in the format used by shell (separated by whitespace)
 
     // long and short promt arg
     #[case(vec!["ed", "--prompt", "> "], EdArgs{prompt: Some("> ".to_string()), ..Default::default()})]
     #[case(vec!["ed", "-p", "> "], EdArgs{prompt: Some("> ".to_string()), ..Default::default()})]
-
     // No args is a valid case. It should return the default args.
     #[case(vec!["ed"], EdArgs{..Default::default()})]
-
     // filename and prompt args
     #[case(vec!["ed", "/tmp/foo"], EdArgs{filename: Some("/tmp/foo".to_string()), ..Default::default()})]
     #[case(vec!["ed", "/tmp/foo", "--prompt", "> "], 
         EdArgs{filename: Some("/tmp/foo".to_string()), 
-                prompt: Some("> ".to_string()), ..Default::default()})] 
+                prompt: Some("> ".to_string()), ..Default::default()})]
     fn parameterized_cli_arg_test(#[case] args: Vec<&str>, #[case] expected: EdArgs) {
         let args = args.iter().map(OsString::from).collect();
         let result = parse_args(args).expect("Error running prompt test");
