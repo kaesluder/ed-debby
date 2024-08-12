@@ -2,6 +2,7 @@
 struct LineBuffer {
     pub lines: Option<Vec<String>>,
     pub filename: Option<String>,
+    pub current_line: usize,
 }
 
 impl LineBuffer {
@@ -9,6 +10,7 @@ impl LineBuffer {
         LineBuffer {
             filename: None,
             lines: None,
+            current_line: 0,
         }
     }
 
@@ -24,6 +26,7 @@ impl LineBuffer {
         Ok(LineBuffer {
             filename: Some(filename.to_string()),
             lines: Some(lines),
+            current_line: 0,
         })
     }
 

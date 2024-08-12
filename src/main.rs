@@ -1,3 +1,4 @@
+mod address;
 mod buffer;
 mod command_parser;
 use crate::command_parser::parse_args::parse_args;
