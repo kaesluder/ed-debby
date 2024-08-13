@@ -1,7 +1,4 @@
-WHITESPACE = _{ " " | "\t" }
-NEWLINE = _{ "\r\n" | "\n" | "\r" }
 
-address = { current | last | absolute }
 
 current = { "." }
 
@@ -9,4 +6,10 @@ last = { "$" }
 
 absolute = { ASCII_DIGIT+ }
 
-ASCII_DIGIT = _{ '0'..'9' }
+address = { current | last | absolute }
+
+range_separator = { ";" | "," }
+
+range = ${
+    address* ~ range_separator* ~ address*
+}

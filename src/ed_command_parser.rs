@@ -1,12 +1,16 @@
-// in your ed_command_parser.rs
 use pest::Parser;
 use pest_derive::Parser;
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Parser)]
+#[grammar = "ed_command.pest"] // Adjust the grammar path as necessary
+pub struct EdCommandParser;
+
+#[derive(Debug, Eq, PartialEq, Clone)]
 enum Address {
     Absolute(usize),
     Last,
     Current,
+    None,
 }
 
 impl Address {
@@ -34,9 +38,47 @@ struct EdCommand {
     command_args: Option<String>,
 }
 
-#[derive(Parser)]
-#[grammar = "ed_command.pest"] // Adjust the grammar path as necessary
-pub struct EdCommandParser;
+fn parse_range(input: &str) -> (Address, RangeSep, Address) {
+    let pairs = EdCommandParser::parse(Rule::range, input)
+        .expect("unsuccessful parse")
+        .next()
+        .unwrap()
+        .into_inner();
+
+    let mut address1 = Address::Current;
+    let mut separator = RangeSep::Comma;
+    let mut address2 = Address::None;
+    let mut range_separator_present = false;
+
+    for pair in pairs {
+        match pair.as_rule() {
+            Rule::address => {
+                if range_separator_present {
+                    address2 = Address::from_str(pair.as_str()).unwrap();
+                } else {
+                    address1 = Address::from_str(pair.as_str()).unwrap();
+                }
+            }
+
+            Rule::range_separator => {
+                range_separator_present = true;
+                if pair.as_str() == ";" {
+                    separator = RangeSep::Semicolon;
+                }
+            }
+
+            _ => {}
+        }
+    }
+
+    if (address2 == Address::None) && range_separator_present {
+        address2 = Address::Current;
+    } else if address2 == Address::None {
+        address2 = address1.clone();
+    }
+
+    (address1, separator, address2)
+}
 
 #[cfg(test)]
 mod tests {
@@ -62,7 +104,22 @@ mod tests {
         assert_eq!(address, expected, "{}", note);
     }
 
-    // Update your test or usage code
+    #[rstest]
+    #[case("50,60", (Address::Absolute(50), RangeSep::Comma, Address::Absolute(60)), "num,num")]
+    #[case("50", (Address::Absolute(50), RangeSep::Comma, Address::Absolute(50)), "num")]
+    #[case("50,", (Address::Absolute(50), RangeSep::Comma, Address::Current), "num,")]
+    #[case(",50", (Address::Current, RangeSep::Comma, Address::Absolute(50)), "num,")]
+    #[case(".,50", (Address::Current, RangeSep::Comma, Address::Absolute(50)), "num,")]
+    #[case(".,$", (Address::Current, RangeSep::Comma, Address::Last), "num,")]
+    #[case("10;20", (Address::Absolute(10), RangeSep::Semicolon, Address::Absolute(20)), "num,")]
+    fn test_parameterized_range_parse(
+        #[case] input: &str,
+        #[case] expected: (Address, RangeSep, Address),
+        #[case] note: &str,
+    ) {
+        let range = parse_range(input);
+        assert_eq!(range, expected, "{}", note)
+    }
     #[rstest]
     #[case("50", Address::Absolute(50), "'50' matches 50")]
     #[case("5", Address::Absolute(5), "'5' matches 5")]
