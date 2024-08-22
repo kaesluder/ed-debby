@@ -13,3 +13,9 @@ range_separator = { ";" | "," }
 range = ${
     address* ~ range_separator* ~ address*
 }
+
+command = { "wq" | "w" | "q" | "p" }
+
+arg = { ANY+ }
+
+line = { SOI ~ range ~ command* ~ arg* ~ EOI }

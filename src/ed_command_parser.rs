@@ -88,6 +88,18 @@ struct EdCommand {
     command_args: Option<String>,
 }
 
+impl EdCommand {
+    fn default() -> EdCommand {
+        EdCommand {
+            address1: Address::Current,
+            address2: Address::Current,
+            range_sep: RangeSep::Comma,
+            command: None,
+            command_args: None,
+        }
+    }
+}
+
 /// Parses a string input into a tuple representing a range of addresses with a separator.
 ///
 /// # Arguments
@@ -114,7 +126,7 @@ struct EdCommand {
 /// conform to the expected format for a range, which is defined by the `Rule::range` in the `pest` parser.
 fn parse_range(
     input: &str,
-) -> Result<(Address, RangeSep, Address), pest::error::Error<crate::ed_command_parser::Rule>> {
+) -> Result<(Address, RangeSep, Address), Error<crate::ed_command_parser::Rule>> {
     let pairs = EdCommandParser::parse(Rule::range, input)?
         .next()
         .unwrap()
@@ -155,6 +167,41 @@ fn parse_range(
     Ok((address1, separator, address2))
 }
 
+fn parse_line(
+    input: &str,
+) -> Result<EdCommand, Error<crate::ed_command_parser::Rule>> {
+    let pairs = EdCommandParser::parse(Rule::line, input)?
+        .next()
+        .unwrap()
+        .into_inner();
+    let mut address1 = Address::Current;
+    let mut range_sep = RangeSep::Comma;
+    let mut address2 = Address::None;
+    let mut command = None;
+    let mut command_args = None;
+    for pair in pairs {
+        match pair.as_rule() {
+            Rule::range => {
+                (address1, range_sep, address2) = parse_range(pair.as_str())?;
+            }
+            Rule::command => {
+                command = Some(String::from(pair.as_str()));
+            }
+            Rule::arg => {
+                command_args = Some(String::from(pair.as_str()));
+            }
+            _ => (),
+        }
+    }
+    Ok(EdCommand {
+        address1,
+        address2,
+        range_sep,
+        command,
+        command_args,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -187,6 +234,7 @@ mod tests {
     #[case(".,50", (Address::Current, RangeSep::Comma, Address::Absolute(50)), "num,")]
     #[case(".,$", (Address::Current, RangeSep::Comma, Address::Last), "num,")]
     #[case("10;20", (Address::Absolute(10), RangeSep::Semicolon, Address::Absolute(20)), "num,")]
+    #[case("", (Address::Current, RangeSep::Comma, Address::Current), "empty string")]
     fn test_parameterized_range_parse(
         #[case] input: &str,
         #[case] expected: (Address, RangeSep, Address),
@@ -219,5 +267,59 @@ mod tests {
 
         let address = Address::from_str(line.as_str()).unwrap();
         assert_eq!(address, expected, "{}", note)
+    }
+
+    // Test function definitions will go he
+    #[rstest]
+    #[case("w", "w", "'w' matches 'w'")]
+    #[case("q", "q", "'q' matches 'q'")]
+    #[case("p", "p", "'p' matches 'p'")]
+    #[case("wq", "wq", "'wq' matches 'wq'")]
+    fn test_parameterized_command_parse(
+        #[case] input: &str,
+        #[case] expected: &str,
+        #[case] note: &str,
+    ) {
+        let line = EdCommandParser::parse(Rule::command, input)
+            .expect("unsuccessful parse")
+            .next()
+            .unwrap();
+
+        let command = line.as_str();
+        assert_eq!(command, expected, "{}", note);
+    }
+    // Test function definitions will go he
+    #[rstest]
+    #[case("10,15p", EdCommand{
+        address1: Address::Absolute(10),
+        address2: Address::Absolute(15),
+        command: Some(String::from("p")),
+        ..EdCommand::default()
+        
+    }, "print command")]
+    #[case("wq", EdCommand{
+        command: Some(String::from("wq")),
+        ..EdCommand::default()
+        
+    }, "write and quit command")]
+    #[case("wfoo.txt", EdCommand{
+        command: Some(String::from("w")),
+        command_args: Some(String::from("foo.txt")),
+        ..EdCommand::default()
+        
+    }, "write with args")]
+    #[case("1,$", EdCommand{
+        address1: Address::Absolute(1),
+        address2: Address::Last,
+        ..EdCommand::default()
+        
+    }, "no command, first and last address")]
+    fn test_parameterized_line_parse_to_command(
+        #[case] input: &str,
+        #[case] expected: EdCommand,
+        #[case] note: &str,
+    ) {
+        let result = parse_line(input).expect("bad line parse");
+        assert_eq!(result, expected, "{}", note);
     }
 }
