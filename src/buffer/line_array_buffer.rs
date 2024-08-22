@@ -1,5 +1,5 @@
 #[derive(Debug, PartialEq, Eq)]
-struct LineBuffer {
+pub struct LineBuffer {
     pub lines: Option<Vec<String>>,
     pub filename: Option<String>,
     pub current_line: usize,

@@ -16,7 +16,8 @@ First commits were made during hurricane Debby, 2024.
 
 ## Differences so Far
 
-It probably won't be possible to get full compatibility, particularly in the area of regular expression processing. Here are some differences so far: 
+It probably won't be possible to get full compatibility, particularly in the area of regular expression processing. If compatibility is a concern, please use the default `ed`. Here are some differences so far: 
 
 - Gnu `ed` uses a linked list for the buffer structure. Rust sources strongly recommend Rust's dynamic vector or other data structures instead. For now that seems like a safe bet.
+- Command history, editing, and other quality-of-life fetures provided by `rustyline`.
 

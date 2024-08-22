@@ -10,3 +10,4 @@ pest = "2.7.11"
 pest_derive = "2.7.11"
 pico-args = { version = "0.5.0", features = ["short-space-opt"] }
 rstest = "0.22.0"
+rustyline = "14.0.0"

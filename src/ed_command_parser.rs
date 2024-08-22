@@ -80,16 +80,16 @@ enum RangeSep {
 /// };
 /// ```
 #[derive(Debug, Eq, PartialEq)]
-struct EdCommand {
-    address1: Address,
-    address2: Address,
-    range_sep: RangeSep,
-    command: Option<String>,
-    command_args: Option<String>,
+pub struct EdCommand {
+    pub address1: Address,
+    pub address2: Address,
+    pub range_sep: RangeSep,
+    pub command: Option<String>,
+    pub command_args: Option<String>,
 }
 
 impl EdCommand {
-    fn default() -> EdCommand {
+    pub fn default() -> EdCommand {
         EdCommand {
             address1: Address::Current,
             address2: Address::Current,
@@ -167,7 +167,7 @@ fn parse_range(
     Ok((address1, separator, address2))
 }
 
-fn parse_line(
+pub fn parse_line(
     input: &str,
 ) -> Result<EdCommand, Error<crate::ed_command_parser::Rule>> {
     let pairs = EdCommandParser::parse(Rule::line, input)?
