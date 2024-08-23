@@ -8,6 +8,7 @@ use crate::command_parser::parse_args::parse_args;
 use std::env;
 use std::error::Error;
 
+use ed_commands::REPLStatus;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
@@ -35,7 +36,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                 let command = ed_command_parser::parse_line(line.as_str())?;
 
                 println!("{:#?}", command);
-                let _ = ed_commands::command_runner(&mut buffer, command)?;
+                let result = ed_commands::command_runner(&mut buffer, &command)?;
+                if result == REPLStatus::Quit {
+                    break;
+                }
             }
             Err(ReadlineError::Interrupted) => {
                 println!("CTRL-C");

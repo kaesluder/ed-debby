@@ -31,10 +31,13 @@ impl LineBuffer {
     }
 
     // Save the lines to a file
-    pub fn save(&self, filename: Option<&str>) -> Result<(), std::io::Error> {
+    pub fn save(&mut self, filename: Option<&str>) -> Result<(), std::io::Error> {
         use std::io::Write;
         let filename = match filename {
-            Some(f) => f.to_string(),
+            Some(f) => {
+                self.filename = Some(f.to_string());
+                f.to_string()
+            }
             None => match &self.filename {
                 Some(f) => f.clone(),
                 None => {
@@ -100,7 +103,7 @@ mod tests {
     #[test]
     fn test_file_save() {
         let filename = "test_files/one.txt";
-        let buff = LineBuffer::from_file(filename).unwrap();
+        let mut buff = LineBuffer::from_file(filename).unwrap();
 
         let out_filename = "/tmp/out.txt";
         buff.save(Some(out_filename)).unwrap();
