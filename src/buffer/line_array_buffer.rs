@@ -6,6 +6,13 @@ pub struct LineBuffer {
 }
 
 impl LineBuffer {
+    pub fn len(&self) -> usize {
+        match &self.lines {
+            Some(lines) => lines.len(),
+            None => 0,
+        }
+    }
+
     pub fn empty() -> Self {
         LineBuffer {
             filename: None,

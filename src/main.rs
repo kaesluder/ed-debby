@@ -36,7 +36,15 @@ fn main() -> Result<(), Box<dyn Error>> {
                 let command = ed_command_parser::parse_line(line.as_str())?;
 
                 println!("{:#?}", command);
-                let result = ed_commands::command_runner(&mut buffer, &command)?;
+                let result_or_err = ed_commands::command_runner(&mut buffer, &command);
+                let result = match result_or_err {
+                    Ok(result) => result,
+                    Err(e) => {
+                        eprintln!("{}", e);
+                        continue;
+                    }
+                };
+
                 if result == REPLStatus::Quit {
                     break;
                 }

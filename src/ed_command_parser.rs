@@ -14,7 +14,7 @@ pub struct EdCommandParser;
 /// * `Current` - Current line in buffer (`.`, default for most cases).
 /// * `None` - No address.
 #[derive(Debug, Eq, PartialEq, Clone)]
-enum Address {
+pub enum Address {
     Absolute(usize),
     Last,
     Current,
