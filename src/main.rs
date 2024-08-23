@@ -2,6 +2,7 @@ mod buffer;
 mod command_parser;
 mod ed_command_parser;
 mod ed_commands;
+mod input_mode;
 
 use crate::buffer::line_array_buffer::LineBuffer;
 use crate::command_parser::parse_args::parse_args;

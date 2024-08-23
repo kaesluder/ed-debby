@@ -1,5 +1,6 @@
 use crate::buffer::line_array_buffer::LineBuffer;
 use crate::ed_command_parser::{Address, EdCommand};
+use crate::input_mode::input_mode;
 use std::fmt;
 
 use std::error::Error;
@@ -39,6 +40,7 @@ pub fn command_runner(
         Some("w") => write(buffer, &command)?,
         Some("wq") => write_quit(buffer, &command)?,
         Some("p") => print(buffer, &command)?,
+        Some("i") => insert(buffer, &command)?,
         _ => REPLStatus::Continue,
     };
 
@@ -96,6 +98,19 @@ fn print(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, Box
         }
         None => println!(""),
     };
+    Ok(REPLStatus::Continue)
+}
+
+fn insert(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, Box<dyn Error>> {
+    let input_lines = input_mode()?;
+    let index = address_to_index(command.address1.clone(), buffer);
+    match &mut buffer.lines {
+        None => buffer.lines = Some(input_lines),
+        Some(buffer_lines) => {
+            buffer_lines.splice(index..index, input_lines);
+        }
+    };
+
     Ok(REPLStatus::Continue)
 }
 
