@@ -1,5 +1,5 @@
 use crate::buffer::line_array_buffer::LineBuffer;
-use crate::ed_command_parser::{Address, EdCommand};
+use crate::ed_command_parser::{Address, EdCommand, EdCommandParser};
 use crate::input_mode::input_mode;
 use std::fmt;
 
@@ -102,7 +102,11 @@ fn print(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, Box
 }
 
 fn insert(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, Box<dyn Error>> {
+    if command.address1 != command.address2 {
+        return Err(Box::new(EdCommandError::InvalidRange));
+    }
     let input_lines = input_mode()?;
+    let input_lines_len = input_lines.len();
     let index = address_to_index(command.address1.clone(), buffer);
     match &mut buffer.lines {
         None => buffer.lines = Some(input_lines),
@@ -110,6 +114,9 @@ fn insert(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, Bo
             buffer_lines.splice(index..index, input_lines);
         }
     };
+
+    // set current line to end of inserted text.
+    buffer.current_line = index + input_lines_len;
 
     Ok(REPLStatus::Continue)
 }
