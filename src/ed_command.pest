@@ -14,7 +14,7 @@ range = ${
     address* ~ range_separator* ~ address*
 }
 
-command = { "wq" | "w" | "q" | "p" | "i" }
+command = { "wq" | "w" | "q" | "p" | "i" | "a" | "c" | "=" }
 
 arg = { ANY+ }
 

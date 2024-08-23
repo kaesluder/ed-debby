@@ -41,6 +41,7 @@ pub fn command_runner(
         Some("wq") => write_quit(buffer, &command)?,
         Some("p") => print(buffer, &command)?,
         Some("i") => insert(buffer, &command)?,
+        Some("=") => print_current_line_number(buffer, &command)?,
         _ => REPLStatus::Continue,
     };
 
@@ -118,6 +119,20 @@ fn insert(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, Bo
     // set current line to end of inserted text.
     buffer.current_line = index + input_lines_len;
 
+    Ok(REPLStatus::Continue)
+}
+
+fn set_current_line_number(buffer: &mut LineBuffer, command: &EdCommand) {
+    let index = address_to_index(command.address2.clone(), buffer);
+    buffer.current_line = index + 1;
+}
+
+fn print_current_line_number(
+    buffer: &mut LineBuffer,
+    command: &EdCommand,
+) -> Result<REPLStatus, Box<dyn Error>> {
+    set_current_line_number(buffer, &command);
+    println!("{}", buffer.current_line);
     Ok(REPLStatus::Continue)
 }
 

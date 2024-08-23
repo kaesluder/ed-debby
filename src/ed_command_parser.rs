@@ -276,6 +276,7 @@ mod tests {
     #[case("p", "p", "'p' matches 'p'")]
     #[case("wq", "wq", "'wq' matches 'wq'")]
     #[case("i", "i", "'i' matches 'i'")]
+    #[case("=", "=", "'=' matches '='")]
     fn test_parameterized_command_parse(
         #[case] input: &str,
         #[case] expected: &str,
