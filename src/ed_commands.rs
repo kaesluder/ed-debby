@@ -1,6 +1,7 @@
 use crate::buffer::line_array_buffer::LineBuffer;
-use crate::ed_command_parser::{Address, EdCommand, EdCommandParser};
+use crate::ed_command_parser::{Address, EdCommand};
 use crate::input_mode::input_mode;
+use crate::modify::*;
 use std::fmt;
 
 use std::error::Error;
@@ -69,7 +70,7 @@ fn write_quit(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus
     }
 }
 
-fn address_to_index(address: Address, buffer: &LineBuffer) -> usize {
+pub fn address_to_index(address: Address, buffer: &LineBuffer) -> usize {
     let index = match address {
         Address::Absolute(addr) => addr,
         Address::Last => buffer.len(),
@@ -99,31 +100,6 @@ fn print(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, Box
         }
         None => println!(""),
     };
-    Ok(REPLStatus::Continue)
-}
-
-fn insert_into_buffer(buffer: &mut LineBuffer, location: &Address, lines: Vec<String>) -> usize {
-    let index = address_to_index(location.clone(), buffer);
-    let input_lines_len = lines.len();
-    match &mut buffer.lines {
-        None => buffer.lines = Some(lines),
-        Some(buffer_lines) => {
-            buffer_lines.splice(index..index, lines);
-        }
-    };
-    // set current line to end of inserted text.
-    buffer.current_line = index + input_lines_len;
-    buffer.current_line
-}
-
-fn insert(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, Box<dyn Error>> {
-    if command.address1 != command.address2 {
-        return Err(Box::new(EdCommandError::InvalidRange));
-    }
-    let input_lines = input_mode()?;
-
-    let _index = insert_into_buffer(buffer, &command.address2, input_lines);
-
     Ok(REPLStatus::Continue)
 }
 
