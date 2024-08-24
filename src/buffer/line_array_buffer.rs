@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct LineBuffer {
     pub lines: Option<Vec<String>>,
     pub filename: Option<String>,

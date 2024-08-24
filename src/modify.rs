@@ -1,6 +1,7 @@
 //! This module handles commands that directly modify the buffer.
 //!
 //! * insert: Insert lines before address.
+//! * append: Append lines after address.
 
 use crate::buffer::line_array_buffer::LineBuffer;
 use crate::ed_command_parser::{Address, EdCommand};
@@ -75,6 +76,34 @@ pub fn insert(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus
 
     Ok(REPLStatus::Continue)
 }
+
+/// Appends a vector of lines into the `LineBuffer` after the specified location.
+///
+/// This function appends the provided lines into the buffer after the position specified
+/// by the `location` address. If the buffer is empty, the lines will be set as the
+/// contents of the buffer. Otherwise, the lines are appended after the appropriate index
+/// without replacing any existing lines. Sets `buffer.current_line` to the end of
+/// the insert.
+///
+/// # Arguments
+///
+/// * `buffer` - A mutable `LineBuffer` reference.
+/// * `location` - The `Address` specifying where to insert the lines in the buffer.
+/// * `lines` - A vector of strings (`Vec<String>`) containing the lines to be inserted.
+///
+/// # Returns
+///
+/// Returns the index of the last line that was appended.
+///
+/// # Example
+///
+/// ```
+/// let mut buffer = LineBuffer::new();
+/// let location = Address::Absolute(3);
+/// let lines = vec![String::from("line1"), String::from("line2")];
+/// let current_line = insert_into_buffer(&mut buffer, &location, lines);
+/// assert_eq!(current_line, 4);
+/// ```
 pub fn append_into_buffer(
     buffer: &mut LineBuffer,
     location: &Address,
@@ -101,7 +130,17 @@ pub fn append_into_buffer(
 
 mod tests {
     use super::*;
-    use rstest::rstest;
+    use rstest::*;
+
+    #[fixture]
+    #[once]
+    /// Load test file before all test functions run.
+    /// This should reduce redundant file operations.
+    fn test_file1() -> LineBuffer {
+        let filename = "test_files/one.txt";
+        LineBuffer::from_file(filename).unwrap()
+    }
+
     #[test]
     /// Test basic insert at start of buffer.
     fn test_basic_insert() {
@@ -112,11 +151,11 @@ mod tests {
         assert_eq!(actual, 3);
         assert_eq!(buffer.lines.unwrap()[2], "three".to_string())
     }
-    #[test]
+    #[rstest]
     /// Test insert into middle of buffer.
-    fn test_insert_middle() {
-        let filename = "test_files/one.txt";
-        let mut buffer = LineBuffer::from_file(filename).unwrap();
+    fn test_insert_middle(test_file1: &LineBuffer) {
+        // copy buffer to avoid clobbering original data
+        let mut buffer = test_file1.clone();
         let address = Address::Absolute(2);
         let lines = vec!["alpha".to_string()];
         let actual = insert_into_buffer(&mut buffer, &address, lines);
@@ -136,11 +175,11 @@ mod tests {
         assert_eq!(buffer.lines.as_ref().unwrap().len(), 1);
         assert_eq!(buffer.lines.as_ref().unwrap()[0], "alpha".to_string())
     }
-    #[test]
+    #[rstest]
     /// Test insert of empty input into buffer.
-    fn test_insert_empty() {
-        let filename = "test_files/one.txt";
-        let mut buffer = LineBuffer::from_file(filename).unwrap();
+    fn test_insert_empty(test_file1: &LineBuffer) {
+        // copy buffer to avoid clobbering original data
+        let mut buffer = test_file1.clone();
         let address = Address::Absolute(2);
         let lines = vec![];
         let actual = insert_into_buffer(&mut buffer, &address, lines);
@@ -149,11 +188,11 @@ mod tests {
         assert_eq!(buffer.lines.as_ref().unwrap()[1], "two".to_string())
     }
 
-    #[test]
+    #[rstest]
     /// Test append into middle of buffer.
-    fn test_append_middle() {
-        let filename = "test_files/one.txt";
-        let mut buffer = LineBuffer::from_file(filename).unwrap();
+    fn test_append_middle(test_file1: &LineBuffer) {
+        // copy buffer to avoid clobbering original data
+        let mut buffer = test_file1.clone();
         let address = Address::Absolute(2);
         let lines = vec!["alpha".to_string()];
         let actual = append_into_buffer(&mut buffer, &address, lines);
@@ -162,11 +201,11 @@ mod tests {
         assert_eq!(buffer.lines.as_ref().unwrap()[2], "alpha".to_string())
     }
 
-    #[test]
+    #[rstest]
     /// Test append into start of buffer.
-    fn test_append_first() {
-        let filename = "test_files/one.txt";
-        let mut buffer = LineBuffer::from_file(filename).unwrap();
+    fn test_append_first(test_file1: &LineBuffer) {
+        // copy buffer to avoid clobbering original data
+        let mut buffer = test_file1.clone();
         let address = Address::Absolute(0);
         let lines = vec!["alpha".to_string()];
         let actual = append_into_buffer(&mut buffer, &address, lines);
@@ -174,11 +213,11 @@ mod tests {
         assert_eq!(buffer.lines.as_ref().unwrap().len(), 6);
         assert_eq!(buffer.lines.as_ref().unwrap()[0], "alpha".to_string())
     }
-    #[test]
+    #[rstest]
     /// Test append into end of buffer.
-    fn test_append_last() {
-        let filename = "test_files/one.txt";
-        let mut buffer = LineBuffer::from_file(filename).unwrap();
+    fn test_append_last(test_file1: &LineBuffer) {
+        // copy buffer to avoid clobbering original data
+        let mut buffer = test_file1.clone();
         let address = Address::Last;
         let lines = vec!["alpha".to_string()];
         let actual = append_into_buffer(&mut buffer, &address, lines);
