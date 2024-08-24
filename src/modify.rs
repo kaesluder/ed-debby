@@ -80,7 +80,11 @@ pub fn append_into_buffer(
     location: &Address,
     lines: Vec<String>,
 ) -> usize {
-    let index = address_to_index(location.clone(), buffer) + 1;
+    let mut index = address_to_index(location.clone(), buffer) + 1;
+    // special case: appending to address 0 inserts *before* line 1
+    if *location == Address::Absolute(0) {
+        index -= index;
+    }
     let input_lines_len = lines.len();
     match &mut buffer.lines {
         None => buffer.lines = Some(lines),
@@ -146,7 +150,7 @@ mod tests {
     }
 
     #[test]
-    /// Test insert into middle of buffer.
+    /// Test append into middle of buffer.
     fn test_append_middle() {
         let filename = "test_files/one.txt";
         let mut buffer = LineBuffer::from_file(filename).unwrap();
@@ -156,5 +160,30 @@ mod tests {
         assert_eq!(actual, 3);
         assert_eq!(buffer.lines.as_ref().unwrap().len(), 6);
         assert_eq!(buffer.lines.as_ref().unwrap()[2], "alpha".to_string())
+    }
+
+    #[test]
+    /// Test append into start of buffer.
+    fn test_append_first() {
+        let filename = "test_files/one.txt";
+        let mut buffer = LineBuffer::from_file(filename).unwrap();
+        let address = Address::Absolute(0);
+        let lines = vec!["alpha".to_string()];
+        let actual = append_into_buffer(&mut buffer, &address, lines);
+        assert_eq!(actual, 1);
+        assert_eq!(buffer.lines.as_ref().unwrap().len(), 6);
+        assert_eq!(buffer.lines.as_ref().unwrap()[0], "alpha".to_string())
+    }
+    #[test]
+    /// Test append into end of buffer.
+    fn test_append_last() {
+        let filename = "test_files/one.txt";
+        let mut buffer = LineBuffer::from_file(filename).unwrap();
+        let address = Address::Last;
+        let lines = vec!["alpha".to_string()];
+        let actual = append_into_buffer(&mut buffer, &address, lines);
+        assert_eq!(actual, 6);
+        assert_eq!(buffer.lines.as_ref().unwrap().len(), 6);
+        assert_eq!(buffer.lines.as_ref().unwrap()[5], "alpha".to_string())
     }
 }
