@@ -102,22 +102,27 @@ fn print(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, Box
     Ok(REPLStatus::Continue)
 }
 
+fn insert_into_buffer(buffer: &mut LineBuffer, location: &Address, lines: Vec<String>) -> usize {
+    let index = address_to_index(location.clone(), buffer);
+    let input_lines_len = lines.len();
+    match &mut buffer.lines {
+        None => buffer.lines = Some(lines),
+        Some(buffer_lines) => {
+            buffer_lines.splice(index..index, lines);
+        }
+    };
+    // set current line to end of inserted text.
+    buffer.current_line = index + input_lines_len;
+    buffer.current_line
+}
+
 fn insert(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, Box<dyn Error>> {
     if command.address1 != command.address2 {
         return Err(Box::new(EdCommandError::InvalidRange));
     }
     let input_lines = input_mode()?;
-    let input_lines_len = input_lines.len();
-    let index = address_to_index(command.address1.clone(), buffer);
-    match &mut buffer.lines {
-        None => buffer.lines = Some(input_lines),
-        Some(buffer_lines) => {
-            buffer_lines.splice(index..index, input_lines);
-        }
-    };
 
-    // set current line to end of inserted text.
-    buffer.current_line = index + input_lines_len;
+    let _index = insert_into_buffer(buffer, &command.address2, input_lines);
 
     Ok(REPLStatus::Continue)
 }
@@ -265,5 +270,48 @@ mod tests {
         buffer.current_line = current;
         let actual_index = address_to_index(Address::Current, &buffer);
         assert_eq!(actual_index, expected);
+    }
+
+    #[test]
+    fn test_basic_insert() {
+        let mut buffer = LineBuffer::empty();
+        let address = Address::Absolute(0);
+        let lines = vec!["one".to_string(), "two".to_string(), "three".to_string()];
+        let actual = insert_into_buffer(&mut buffer, &address, lines);
+        assert_eq!(actual, 3);
+        assert_eq!(buffer.lines.unwrap()[2], "three".to_string())
+    }
+    #[test]
+    fn test_basic_insert_middle() {
+        let filename = "test_files/one.txt";
+        let mut buffer = LineBuffer::from_file(filename).unwrap();
+        let address = Address::Absolute(2);
+        let lines = vec!["alpha".to_string()];
+        let actual = insert_into_buffer(&mut buffer, &address, lines);
+        assert_eq!(actual, 2);
+        assert_eq!(buffer.lines.as_ref().unwrap().len(), 6);
+        assert_eq!(buffer.lines.as_ref().unwrap()[1], "alpha".to_string())
+    }
+
+    #[test]
+    fn test_insert_into_empty() {
+        let mut buffer = LineBuffer::empty();
+        let address = Address::Absolute(1);
+        let lines = vec!["alpha".to_string()];
+        let actual = insert_into_buffer(&mut buffer, &address, lines);
+        assert_eq!(actual, 1);
+        assert_eq!(buffer.lines.as_ref().unwrap().len(), 1);
+        assert_eq!(buffer.lines.as_ref().unwrap()[0], "alpha".to_string())
+    }
+    #[test]
+    fn test_insert_empty() {
+        let filename = "test_files/one.txt";
+        let mut buffer = LineBuffer::from_file(filename).unwrap();
+        let address = Address::Absolute(2);
+        let lines = vec![];
+        let actual = insert_into_buffer(&mut buffer, &address, lines);
+        assert_eq!(actual, 1);
+        assert_eq!(buffer.lines.as_ref().unwrap().len(), 5);
+        assert_eq!(buffer.lines.as_ref().unwrap()[1], "two".to_string())
     }
 }
