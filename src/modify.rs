@@ -9,9 +9,9 @@ use crate::ed_commands::*;
 use crate::input_mode::input_mode;
 use std::error::Error;
 
-/// Inserts a vector of lines into the `LineBuffer` at the specified location.
+/// Inserts a vector of lines into the `LineBuffer` before the specified location.
 ///
-/// This function inserts the provided lines into the buffer at the position specified
+/// This function inserts the provided lines into the buffer before the position specified
 /// by the `location` address. If the buffer is empty, the lines will be set as the
 /// contents of the buffer. Otherwise, the lines are inserted before the appropriate index
 /// without replacing any existing lines. Sets `buffer.current_line` to the end of
@@ -124,6 +124,29 @@ pub fn append_into_buffer(
     // set current line to end of inserted text.
     buffer.current_line = index + input_lines_len;
     buffer.current_line
+}
+
+/// Appends lines into the buffer after the specified address.
+///
+/// This function takes an `EdCommand` with an address and inserts the input lines
+/// into the `LineBuffer` after the location specified by the command.
+/// If a range is specified, inserts at address2. Updates current line
+/// to end of inserted text.
+///
+/// # Arguments
+///
+/// * `buffer` - A mutable reference to the `LineBuffer` where the lines will be appended.
+/// * `command` - A reference to the `EdCommand` containing the address.
+///
+/// # Returns
+///
+/// Returns `Ok(REPLStatus::Continue)` if the operation is successful, or an error if user input fails.
+pub fn append(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, Box<dyn Error>> {
+    let input_lines = input_mode()?;
+
+    let _index = append_into_buffer(buffer, &command.address2, input_lines);
+
+    Ok(REPLStatus::Continue)
 }
 
 #[cfg(test)]
