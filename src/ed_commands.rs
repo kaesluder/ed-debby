@@ -1,6 +1,5 @@
 use crate::buffer::line_array_buffer::LineBuffer;
 use crate::ed_command_parser::{Address, EdCommand};
-use crate::input_mode::input_mode;
 use crate::modify::*;
 use std::fmt;
 

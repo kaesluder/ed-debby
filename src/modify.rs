@@ -148,6 +148,27 @@ pub fn append(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus
 
     Ok(REPLStatus::Continue)
 }
+pub fn correct_into_buffer(
+    buffer: &mut LineBuffer,
+    location: &Address,
+    lines: Vec<String>,
+) -> usize {
+    let mut index = address_to_index(location.clone(), buffer) + 1;
+    // special case: appending to address 0 inserts *before* line 1
+    if *location == Address::Absolute(0) {
+        index -= index;
+    }
+    let input_lines_len = lines.len();
+    match &mut buffer.lines {
+        None => buffer.lines = Some(lines),
+        Some(buffer_lines) => {
+            buffer_lines.splice(index..index + 1, lines);
+        }
+    };
+    // set current line to end of inserted text.
+    buffer.current_line = index + input_lines_len;
+    buffer.current_line
+}
 
 #[cfg(test)]
 
@@ -247,5 +268,22 @@ mod tests {
         assert_eq!(actual, 6);
         assert_eq!(buffer.lines.as_ref().unwrap().len(), 6);
         assert_eq!(buffer.lines.as_ref().unwrap()[5], "alpha".to_string())
+    }
+
+    #[rstest]
+    /// Test append into middle of buffer.
+    fn test_correct_middle(test_file1: &LineBuffer) {
+        // copy buffer to avoid clobbering original data
+        let mut buffer = test_file1.clone();
+        let address = Address::Absolute(2);
+        let lines = vec!["alpha".to_string()];
+        let actual = correct_into_buffer(&mut buffer, &address, lines);
+        assert_eq!(actual, 3);
+        assert_eq!(buffer.lines.as_ref().unwrap().len(), 5);
+        assert_eq!(buffer.lines.as_ref().unwrap()[0], "one".to_string());
+        assert_eq!(buffer.lines.as_ref().unwrap()[1], "two".to_string());
+        assert_eq!(buffer.lines.as_ref().unwrap()[2], "alpha".to_string());
+        assert_eq!(buffer.lines.as_ref().unwrap()[3], "four".to_string());
+        assert_eq!(buffer.lines.as_ref().unwrap()[4], "five".to_string());
     }
 }

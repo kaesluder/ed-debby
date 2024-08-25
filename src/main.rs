@@ -12,7 +12,6 @@ use std::error::Error;
 
 use ed_commands::REPLStatus;
 use rustyline::error::ReadlineError;
-use rustyline::Editor;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let config = parse_args(env::args_os().collect())?;

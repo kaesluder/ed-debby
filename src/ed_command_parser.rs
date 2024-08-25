@@ -48,7 +48,7 @@ impl Address {
 /// * `Comma` - Preserves current line.
 /// * `Semicolon` - Sets current line to first value in range.
 #[derive(Debug, Eq, PartialEq)]
-enum RangeSep {
+pub enum RangeSep {
     Comma,
     Semicolon,
 }

@@ -1,4 +1,3 @@
-use crate::ed_commands::EdCommandError;
 use rustyline::error::ReadlineError;
 use std::error::Error;
 
