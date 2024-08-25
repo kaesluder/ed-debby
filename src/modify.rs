@@ -2,6 +2,7 @@
 //!
 //! * insert: Insert lines before address.
 //! * append: Append lines after address.
+//! * correct: Overwrite range with new text.
 
 use crate::buffer::line_array_buffer::LineBuffer;
 use crate::ed_command_parser::{Address, EdCommand};
@@ -26,16 +27,6 @@ use std::error::Error;
 /// # Returns
 ///
 /// Returns the index of the last line that was inserted.
-///
-/// # Example
-///
-/// ```
-/// let mut buffer = LineBuffer::new();
-/// let location = Address::Absolute(3);
-/// let lines = vec![String::from("line1"), String::from("line2")];
-/// let current_line = insert_into_buffer(&mut buffer, &location, lines);
-/// assert_eq!(current_line, 4);
-/// ```
 pub fn insert_into_buffer(
     buffer: &mut LineBuffer,
     location: &Address,
@@ -94,16 +85,6 @@ pub fn insert(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus
 /// # Returns
 ///
 /// Returns the index of the last line that was appended.
-///
-/// # Example
-///
-/// ```
-/// let mut buffer = LineBuffer::new();
-/// let location = Address::Absolute(3);
-/// let lines = vec![String::from("line1"), String::from("line2")];
-/// let current_line = insert_into_buffer(&mut buffer, &location, lines);
-/// assert_eq!(current_line, 4);
-/// ```
 pub fn append_into_buffer(
     buffer: &mut LineBuffer,
     location: &Address,
@@ -148,6 +129,18 @@ pub fn append(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus
 
     Ok(REPLStatus::Continue)
 }
+
+/// Insert lines into buffer replacing the specified range.
+///
+/// # Arguments
+///
+/// * `buffer` - A mutable `LineBuffer` reference.
+/// * `location` - The `Address` specifying where to insert the lines in the buffer.
+/// * `lines` - A vector of strings (`Vec<String>`) containing the lines to be inserted.
+///
+/// # Returns
+///
+/// Returns the index of the last line that was appended.
 pub fn correct_into_buffer(
     buffer: &mut LineBuffer,
     location: &Address,
@@ -195,6 +188,7 @@ mod tests {
         assert_eq!(actual, 3);
         assert_eq!(buffer.lines.unwrap()[2], "three".to_string())
     }
+
     #[rstest]
     /// Test insert into middle of buffer.
     fn test_insert_middle(test_file1: &LineBuffer) {
@@ -219,6 +213,7 @@ mod tests {
         assert_eq!(buffer.lines.as_ref().unwrap().len(), 1);
         assert_eq!(buffer.lines.as_ref().unwrap()[0], "alpha".to_string())
     }
+
     #[rstest]
     /// Test insert of empty input into buffer.
     fn test_insert_empty(test_file1: &LineBuffer) {
@@ -257,6 +252,7 @@ mod tests {
         assert_eq!(buffer.lines.as_ref().unwrap().len(), 6);
         assert_eq!(buffer.lines.as_ref().unwrap()[0], "alpha".to_string())
     }
+
     #[rstest]
     /// Test append into end of buffer.
     fn test_append_last(test_file1: &LineBuffer) {
