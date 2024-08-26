@@ -43,6 +43,7 @@ pub fn command_runner(
         Some("i") => insert(buffer, &command)?,
         Some("=") => print_current_line_number(buffer, &command)?,
         Some("a") => append(buffer, &command)?,
+        Some("c") => correct(buffer, &command)?,
         _ => REPLStatus::Continue,
     };
 

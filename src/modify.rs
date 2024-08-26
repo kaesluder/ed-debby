@@ -143,24 +143,40 @@ pub fn append(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus
 /// Returns the index of the last line that was appended.
 pub fn correct_into_buffer(
     buffer: &mut LineBuffer,
-    location: &Address,
+    location1: &Address,
+    location2: &Address,
     lines: Vec<String>,
-) -> usize {
-    let mut index = address_to_index(location.clone(), buffer) + 1;
-    // special case: appending to address 0 inserts *before* line 1
-    if *location == Address::Absolute(0) {
-        index -= index;
+) -> Result<usize, EdCommandError> {
+    if *location1 == Address::Absolute(0) {
+        return Err(EdCommandError::InvalidRange);
     }
+    let index1 = address_to_index(location1.clone(), buffer);
+    let index2 = address_to_index(location2.clone(), buffer);
     let input_lines_len = lines.len();
     match &mut buffer.lines {
         None => buffer.lines = Some(lines),
         Some(buffer_lines) => {
-            buffer_lines.splice(index..index + 1, lines);
+            buffer_lines.splice(index1..index2 + 1, lines);
         }
     };
     // set current line to end of inserted text.
-    buffer.current_line = index + input_lines_len;
-    buffer.current_line
+    buffer.current_line = index2 + input_lines_len;
+    Ok(buffer.current_line)
+}
+
+pub fn correct(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, Box<dyn Error>> {
+    let input_lines = input_mode()?;
+
+    match correct_into_buffer(buffer, &command.address1, &command.address2, input_lines) {
+        Err(_) => {
+            eprintln!("Invalid address");
+        }
+        Ok(new_location) => {
+            println!("{}", new_location);
+        }
+    };
+
+    Ok(REPLStatus::Continue)
 }
 
 #[cfg(test)]
@@ -271,14 +287,15 @@ mod tests {
     fn test_correct_middle(test_file1: &LineBuffer) {
         // copy buffer to avoid clobbering original data
         let mut buffer = test_file1.clone();
-        let address = Address::Absolute(2);
+        let address1 = Address::Absolute(2);
+        let address2 = Address::Absolute(2);
         let lines = vec!["alpha".to_string()];
-        let actual = correct_into_buffer(&mut buffer, &address, lines);
-        assert_eq!(actual, 3);
+        let actual = correct_into_buffer(&mut buffer, &address1, &address2, lines)
+            .expect("Unable to change buffer.");
+        assert_eq!(actual, 2);
         assert_eq!(buffer.lines.as_ref().unwrap().len(), 5);
         assert_eq!(buffer.lines.as_ref().unwrap()[0], "one".to_string());
-        assert_eq!(buffer.lines.as_ref().unwrap()[1], "two".to_string());
-        assert_eq!(buffer.lines.as_ref().unwrap()[2], "alpha".to_string());
+        assert_eq!(buffer.lines.as_ref().unwrap()[1], "alpha".to_string());
         assert_eq!(buffer.lines.as_ref().unwrap()[3], "four".to_string());
         assert_eq!(buffer.lines.as_ref().unwrap()[4], "five".to_string());
     }
