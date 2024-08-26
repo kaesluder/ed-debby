@@ -147,9 +147,6 @@ pub fn correct_into_buffer(
     location2: &Address,
     lines: Vec<String>,
 ) -> Result<usize, EdCommandError> {
-    if *location1 == Address::Absolute(0) {
-        return Err(EdCommandError::InvalidRange);
-    }
     let index1 = address_to_index(location1.clone(), buffer);
     let index2 = address_to_index(location2.clone(), buffer);
     let input_lines_len = lines.len();
@@ -165,16 +162,17 @@ pub fn correct_into_buffer(
 }
 
 pub fn correct(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, Box<dyn Error>> {
-    let input_lines = input_mode()?;
+    // handle special case where 0 is out of range
+    // unlike insert and append
+    if command.address1 == Address::Absolute(0) {
+        eprintln!("Invalid address");
+        return Ok(REPLStatus::Continue);
+    }
 
-    match correct_into_buffer(buffer, &command.address1, &command.address2, input_lines) {
-        Err(_) => {
-            eprintln!("Invalid address");
-        }
-        Ok(new_location) => {
-            println!("{}", new_location);
-        }
-    };
+    let input_lines = input_mode()?;
+    let new_location =
+        correct_into_buffer(buffer, &command.address1, &command.address2, input_lines)?;
+    println!("{}", new_location);
 
     Ok(REPLStatus::Continue)
 }
@@ -283,7 +281,7 @@ mod tests {
     }
 
     #[rstest]
-    /// Test append into middle of buffer.
+    /// Test correct into middle of buffer.
     fn test_correct_middle(test_file1: &LineBuffer) {
         // copy buffer to avoid clobbering original data
         let mut buffer = test_file1.clone();
@@ -299,4 +297,17 @@ mod tests {
         assert_eq!(buffer.lines.as_ref().unwrap()[3], "four".to_string());
         assert_eq!(buffer.lines.as_ref().unwrap()[4], "five".to_string());
     }
+    // #[rstest]
+    // /// Test correct at address 0 should return InvalidRange
+    // fn test_correct_zero_fails(test_file1: &LineBuffer) {
+    //     // copy buffer to avoid clobbering original data
+    //     let mut buffer = test_file1.clone();
+    //     let address1 = Address::Absolute(0);
+    //     let address2 = Address::Absolute(2);
+    //     let lines = vec!["alpha".to_string()];
+    //     match correct_into_buffer(&mut buffer, &address1, &address2, lines) {
+    //         Err(EdCommandError::InvalidRange) => assert!(true),
+    //         _ => assert!(false),
+    //     };
+    // }
 }
