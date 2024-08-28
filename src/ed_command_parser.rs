@@ -13,11 +13,11 @@ pub struct EdCommandParser;
 /// * `Last` - The last line in the buffer (`$`).
 /// * `Current` - Current line in buffer (`.`, default for most cases).
 /// * `None` - No address.
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, PartialOrd, Ord, Clone)]
 pub enum Address {
+    Current,
     Absolute(usize),
     Last,
-    Current,
     None,
 }
 

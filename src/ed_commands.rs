@@ -5,36 +5,113 @@ use std::fmt;
 
 use std::error::Error;
 
+/// Represents errors that can occur when executing an editor command.
+///
+/// # Variants
+///
+/// * `InvalidRange` - Indicates that the specified range in the command is invalid, such as when the first address is greater than the second or the address is out of bounds.
+/// * `EmptyBuffer` - Indicates that an operation was attempted on an empty buffer.
 #[derive(Debug)]
 pub enum EdCommandError {
     InvalidRange,
+    EmptyBuffer,
 }
 
 impl fmt::Display for EdCommandError {
+    /// Formats the error message for display.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             EdCommandError::InvalidRange => write!(f, "Invalid Range"),
+            EdCommandError::EmptyBuffer => write!(f, "Empty Buffer"),
         }
     }
 }
 
 impl std::error::Error for EdCommandError {
+    /// Returns the source of the error, if any. In this case, no underlying error is wrapped, so it returns `None`.
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        // Since InvalidRange doesn't wrap another error, return None.
         None
     }
 }
 
+/// Signal for REPL to `Continue` or `Quit`.
+///
+/// # Variants
+///
+/// * `Continue` - Indicates that the REPL should continue running after the current command.
+/// * `Quit` - Indicates that the REPL should exit.
 #[derive(Debug, Eq, PartialEq)]
 pub enum REPLStatus {
     Continue,
     Quit,
 }
 
+/// Validates that addresses provided with command are within buffer bounds and in the correct order.
+/// `Absolute(0) <= command.address1 <= buffer.current <= buffer.len()`
+///
+/// # Arguments
+///
+/// * `buffer` - A reference to the `LineBuffer`, which holds the lines of text being edited.
+/// * `command` - A reference to the `EdCommand`, which contains the addresses that need to be validated.
+///
+/// # Return Value
+///
+/// Returns `Result<(), EdCommandError>`, where:
+/// * `Ok(())` indicates that the range is valid.
+/// * An `EdCommandError::InvalidRange` error is returned if the addresses specified in the command are out of bounds or the first address is greater than the second address.
+fn validate_range(buffer: &LineBuffer, command: &EdCommand) -> Result<(), EdCommandError> {
+    println!("{}, {}", buffer.current_line, buffer.len());
+
+    let address1 = match command.address1.clone() {
+        Address::Current => Address::Absolute(buffer.current_line),
+        Address::Last => Address::Absolute(buffer.len()),
+        other => other,
+    };
+
+    let address2 = match command.address2.clone() {
+        Address::Current => Address::Absolute(buffer.current_line),
+        Address::Last => Address::Absolute(buffer.len()),
+        other => other,
+    };
+
+    if address1 > address2 {
+        return Err(EdCommandError::InvalidRange);
+    }
+
+    // Check if address1 is within the valid range
+    if let Address::Absolute(addr) = address1 {
+        if addr > buffer.len() {
+            return Err(EdCommandError::InvalidRange);
+        }
+    }
+
+    // Check if address2 is within the valid range
+    if let Address::Absolute(addr) = address2 {
+        if addr > buffer.len() {
+            return Err(EdCommandError::InvalidRange);
+        }
+    }
+    Ok(())
+}
+
+/// Executes the given command on the buffer and returns the result status.
+///
+/// # Arguments
+///
+/// * `buffer` - A mutable reference to the `LineBuffer`, which holds the lines of text being edited.
+/// * `command` - A reference to the `EdCommand`, which specifies the command to be executed and its associated parameters.
+///
+/// # Return Value
+///
+/// Returns `Result<REPLStatus, Box<dyn Error>>` where:
+/// * `Ok(REPLStatus::Continue)` indicates that the command was executed successfully and the REPL should continue running.
+/// * `Ok(REPLStatus::Quit)` indicates that the editor should exit.
+/// * An error is returned if the command execution fails, such as due to an invalid range or file I/O error.
 pub fn command_runner(
     buffer: &mut LineBuffer,
     command: &EdCommand,
 ) -> Result<REPLStatus, Box<dyn Error>> {
+    validate_range(buffer, &command)?;
     let repl_status = match command.command.as_deref() {
         Some("q") => quit(buffer, &command)?,
         Some("w") => write(buffer, &command)?,
@@ -50,6 +127,16 @@ pub fn command_runner(
     Ok(repl_status)
 }
 
+/// Quits the editor, performing any necessary cleanup before exiting.
+///
+/// # Arguments
+///
+/// * `_buffer` - An unused mutable reference to the `LineBuffer`.
+/// * `_command` - An unused reference to the `EdCommand`.
+///
+/// # Return Value
+///
+/// Returns `Result<REPLStatus, Box<dyn Error>>` with `Ok(REPLStatus::Quit)` indicating the editor should exit.
 fn quit(_buffer: &mut LineBuffer, _command: &EdCommand) -> Result<REPLStatus, Box<dyn Error>> {
     // Perform cleanup or any necessary operations before quitting
 
@@ -57,6 +144,16 @@ fn quit(_buffer: &mut LineBuffer, _command: &EdCommand) -> Result<REPLStatus, Bo
     Ok(REPLStatus::Quit)
 }
 
+/// Writes the buffer to a file and continues editing.
+///
+/// # Arguments
+///
+/// * `buffer` - A mutable reference to the `LineBuffer`, which holds the lines of text to be saved.
+/// * `command` - A reference to the `EdCommand`, containing any arguments for the write operation (e.g., file name).
+///
+/// # Return Value
+///
+/// Returns `Result<REPLStatus, Box<dyn Error>>` with `Ok(REPLStatus::Continue)` if the buffer is successfully saved, or an error if the save operation fails.
 fn write(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, Box<dyn Error>> {
     match buffer.save(command.command_args.as_deref()) {
         Ok(_) => Ok(REPLStatus::Continue),
@@ -64,6 +161,16 @@ fn write(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, Box
     }
 }
 
+/// Writes the buffer to a file and then quits the editor.
+///
+/// # Arguments
+///
+/// * `buffer` - A mutable reference to the `LineBuffer`, which holds the lines of text to be saved.
+/// * `command` - A reference to the `EdCommand`, containing any arguments for the write operation (e.g., file name).
+///
+/// # Return Value
+///
+/// Returns `Result<REPLStatus, Box<dyn Error>>` with `Ok(REPLStatus::Quit)` if the buffer is successfully saved, or an error if the save operation fails.
 fn write_quit(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, Box<dyn Error>> {
     match buffer.save(command.command_args.as_deref()) {
         Ok(_) => Ok(REPLStatus::Quit),
@@ -87,7 +194,21 @@ pub fn address_to_index(address: Address, buffer: &LineBuffer) -> usize {
     }
 }
 
+/// Prints the lines within the specified range in the buffer.
+///
+/// # Arguments
+///
+/// * `buffer` - A mutable reference to the `LineBuffer`, which holds the lines of text being edited.
+/// * `command` - A reference to the `EdCommand`, containing the addresses specifying the range of lines to print.
+///
+/// # Result
+///
+/// Returns `Result<REPLStatus, Box<dyn Error>>`, where `Ok(REPLStatus::Continue)` indicates successful execution.
+/// Returns an `EdCommandError::EmptyBuffer` error if the buffer is empty, or an `EdCommandError::InvalidRange` error if the specified range is invalid.
 fn print(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, Box<dyn Error>> {
+    if buffer.len() == 0 {
+        return Err(Box::new(EdCommandError::EmptyBuffer));
+    }
     let low = address_to_index(command.address1.clone(), buffer);
     let high = address_to_index(command.address2.clone(), buffer);
     if low > high {
@@ -104,11 +225,22 @@ fn print(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, Box
     Ok(REPLStatus::Continue)
 }
 
+/// Sets the line number from the `command` on the `buffer` object.
 fn set_current_line_number(buffer: &mut LineBuffer, command: &EdCommand) {
     let index = address_to_index(command.address2.clone(), buffer);
     buffer.current_line = index + 1;
 }
 
+/// Prints the current line number of the buffer.
+///
+/// # Arguments
+///
+/// * `buffer` - A mutable reference to the `LineBuffer`, which holds the lines of text being edited.
+/// * `command` - A reference to the `EdCommand`, representing the command to be executed.
+///
+/// ## Returns
+///
+/// `Result<REPLStatus>`
 fn print_current_line_number(
     buffer: &mut LineBuffer,
     command: &EdCommand,
