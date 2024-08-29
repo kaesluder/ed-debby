@@ -15,6 +15,13 @@ use std::error::Error;
 pub enum EdCommandError {
     InvalidRange,
     EmptyBuffer,
+    InputModeError(rustyline::error::ReadlineError),
+}
+
+impl From<rustyline::error::ReadlineError> for EdCommandError {
+    fn from(err: rustyline::error::ReadlineError) -> EdCommandError {
+        EdCommandError::InputModeError(err)
+    }
 }
 
 impl fmt::Display for EdCommandError {
@@ -23,6 +30,7 @@ impl fmt::Display for EdCommandError {
         match *self {
             EdCommandError::InvalidRange => write!(f, "Invalid Range"),
             EdCommandError::EmptyBuffer => write!(f, "Empty Buffer"),
+            EdCommandError::InputModeError(ref e) => write!(f, "Input Error: {}", e),
         }
     }
 }

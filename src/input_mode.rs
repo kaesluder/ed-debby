@@ -1,7 +1,7 @@
+use crate::ed_commands::EdCommandError;
 use rustyline::error::ReadlineError;
-use std::error::Error;
 
-pub fn input_mode() -> Result<Vec<String>, Box<dyn Error>> {
+pub fn input_mode() -> Result<Vec<String>, EdCommandError> {
     let mut rl = rustyline::DefaultEditor::new()?;
 
     let mut input_buffer: Vec<String> = vec![];
@@ -31,7 +31,7 @@ pub fn input_mode() -> Result<Vec<String>, Box<dyn Error>> {
             }
             Err(err) => {
                 println!("Error: {:?}", err);
-                break;
+                return Err(EdCommandError::InputModeError(err));
             }
         }
     }
