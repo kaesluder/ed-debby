@@ -60,7 +60,7 @@ pub fn insert_into_buffer(
 /// # Returns
 ///
 /// Returns `Ok(REPLStatus::Continue)` if the operation is successful, or an error if user input fails.
-pub fn insert(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, Box<dyn Error>> {
+pub fn insert(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, EdCommandError> {
     let input_lines = input_mode()?;
 
     let _index = insert_into_buffer(buffer, &command.address2, input_lines);
@@ -122,7 +122,7 @@ pub fn append_into_buffer(
 /// # Returns
 ///
 /// Returns `Ok(REPLStatus::Continue)` if the operation is successful, or an error if user input fails.
-pub fn append(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, Box<dyn Error>> {
+pub fn append(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, EdCommandError> {
     let input_lines = input_mode()?;
 
     let _index = append_into_buffer(buffer, &command.address2, input_lines);
@@ -161,12 +161,12 @@ pub fn correct_into_buffer(
     Ok(buffer.current_line)
 }
 
-pub fn correct(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, Box<dyn Error>> {
+pub fn correct(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, EdCommandError> {
     // handle special case where 0 is out of range
     // unlike insert and append
     if command.address1 == Address::Absolute(0) {
         eprintln!("Invalid address");
-        return Err(Box::new(EdCommandError::EmptyBuffer));
+        return Err(EdCommandError::EmptyBuffer);
     }
 
     let input_lines = input_mode()?;
