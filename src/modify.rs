@@ -166,7 +166,7 @@ pub fn correct(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatu
     // unlike insert and append
     if command.address1 == Address::Absolute(0) {
         eprintln!("Invalid address");
-        return Ok(REPLStatus::Continue);
+        return Err(Box::new(EdCommandError::EmptyBuffer));
     }
 
     let input_lines = input_mode()?;
@@ -177,6 +177,36 @@ pub fn correct(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatu
     Ok(REPLStatus::Continue)
 }
 
+pub fn delete_from_buffer(
+    buffer: &mut LineBuffer,
+    location1: &Address,
+    location2: &Address,
+) -> Result<usize, EdCommandError> {
+    let index1 = address_to_index(location1.clone(), buffer);
+    let index2 = address_to_index(location2.clone(), buffer);
+    match &mut buffer.lines {
+        None => return Err(EdCommandError::EmptyBuffer),
+        Some(buffer_lines) => {
+            buffer_lines.splice(index1..index2 + 1, vec![]);
+        }
+    };
+    // set current line to end of inserted text.
+    buffer.current_line = index2 + 1;
+    Ok(buffer.current_line)
+}
+
+pub fn delete(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, EdCommandError> {
+    // handle special case where 0 is out of range
+    // unlike insert and append
+    if command.address1 == Address::Absolute(0) {
+        return Err(EdCommandError::InvalidRange);
+    }
+
+    let new_location = delete_from_buffer(buffer, &command.address1, &command.address2)?;
+    println!("{}", new_location);
+
+    Ok(REPLStatus::Continue)
+}
 #[cfg(test)]
 
 mod tests {
@@ -297,17 +327,36 @@ mod tests {
         assert_eq!(buffer.lines.as_ref().unwrap()[3], "four".to_string());
         assert_eq!(buffer.lines.as_ref().unwrap()[4], "five".to_string());
     }
-    // #[rstest]
-    // /// Test correct at address 0 should return InvalidRange
-    // fn test_correct_zero_fails(test_file1: &LineBuffer) {
-    //     // copy buffer to avoid clobbering original data
-    //     let mut buffer = test_file1.clone();
-    //     let address1 = Address::Absolute(0);
-    //     let address2 = Address::Absolute(2);
-    //     let lines = vec!["alpha".to_string()];
-    //     match correct_into_buffer(&mut buffer, &address1, &address2, lines) {
-    //         Err(EdCommandError::InvalidRange) => assert!(true),
-    //         _ => assert!(false),
-    //     };
-    // }
+
+    #[rstest]
+    fn test_delete_middle(test_file1: &LineBuffer) {
+        // copy buffer to avoid clobbering original data
+        let mut buffer = test_file1.clone();
+        let address1 = Address::Absolute(2);
+        let address2 = Address::Absolute(2);
+        let actual = delete_from_buffer(&mut buffer, &address1, &address2)
+            .expect("Unable to change buffer.");
+        assert_eq!(actual, 2);
+        assert_eq!(buffer.lines.as_ref().unwrap().len(), 4);
+        assert_eq!(buffer.lines.as_ref().unwrap()[0], "one".to_string());
+        assert_eq!(buffer.lines.as_ref().unwrap()[1], "three".to_string());
+        assert_eq!(buffer.lines.as_ref().unwrap()[2], "four".to_string());
+        assert_eq!(buffer.lines.as_ref().unwrap()[3], "five".to_string());
+    }
+
+    #[rstest]
+    fn test_delete_zero_returns_err(test_file1: &LineBuffer) {
+        // copy buffer to avoid clobbering original data
+        let mut buffer = test_file1.clone();
+        let command = EdCommand {
+            address1: Address::Absolute(0),
+            ..EdCommand::default()
+        };
+        let result = delete(&mut buffer, &command);
+
+        match result {
+            Err(EdCommandError::InvalidRange) => assert!(true),
+            _ => assert!(false),
+        };
+    }
 }
