@@ -18,6 +18,8 @@ pub enum EdCommandError {
     InputModeError(rustyline::error::ReadlineError),
 }
 
+/// Automatically wrap ReadLineError in an EdCommandError
+/// allows for using `?` for error handling in input_mode
 impl From<rustyline::error::ReadlineError> for EdCommandError {
     fn from(err: rustyline::error::ReadlineError) -> EdCommandError {
         EdCommandError::InputModeError(err)
