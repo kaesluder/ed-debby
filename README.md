@@ -21,12 +21,7 @@ It probably won't be possible to get full compatibility, particularly in the are
 - Gnu `ed` uses a linked list for the buffer structure. Rust sources strongly recommend Rust's dynamic vector or other data structures instead. For now that seems like a safe bet.
 - Command history, editing, and other quality-of-life fetures provided by `rustyline`.
 
-## Ranges
-
-
-Here's the provided text reformatted into Markdown for better readability and structure:
-
----
+# Implemented and Planned Features
 
 ## Ranges
 
