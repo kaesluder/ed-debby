@@ -153,6 +153,12 @@ fn parse_range(
                     separator = RangeSep::Semicolon;
                 }
             }
+            
+            Rule::range_all => {
+                address1 = Address::Absolute(1);
+                separator = RangeSep::Comma;
+                address2 = Address::Last;
+            }
 
             _ => {}
         }
@@ -235,6 +241,7 @@ mod tests {
     #[case(".,$", (Address::Current, RangeSep::Comma, Address::Last), "num,")]
     #[case("10;20", (Address::Absolute(10), RangeSep::Semicolon, Address::Absolute(20)), "num,")]
     #[case("", (Address::Current, RangeSep::Comma, Address::Current), "empty string")]
+    #[case("%", (Address::Absolute(1), RangeSep::Comma, Address::Last), "% (all lines)")]
     fn test_parameterized_range_parse(
         #[case] input: &str,
         #[case] expected: (Address, RangeSep, Address),
@@ -277,6 +284,7 @@ mod tests {
     #[case("wq", "wq", "'wq' matches 'wq'")]
     #[case("i", "i", "'i' matches 'i'")]
     #[case("=", "=", "'=' matches '='")]
+    #[case("d", "d", "'d' (delete)")]
     fn test_parameterized_command_parse(
         #[case] input: &str,
         #[case] expected: &str,

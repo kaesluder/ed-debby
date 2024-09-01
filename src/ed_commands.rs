@@ -69,7 +69,11 @@ pub enum REPLStatus {
 /// Returns `Result<(), EdCommandError>`, where:
 /// * `Ok(())` indicates that the range is valid.
 /// * An `EdCommandError::InvalidRange` error is returned if the addresses specified in the command are out of bounds or the first address is greater than the second address.
-fn validate_range(buffer: &LineBuffer, command: &EdCommand) -> Result<(), EdCommandError> {
+fn validate_range(buffer: &mut LineBuffer, command: &EdCommand) -> Result<(), EdCommandError> {
+    if buffer.current_line > buffer.len() {
+        buffer.current_line = buffer.len();
+    }
+
     println!("{}, {}", buffer.current_line, buffer.len());
 
     let address1 = match command.address1.clone() {
@@ -131,6 +135,7 @@ pub fn command_runner(
         Some("=") => print_current_line_number(buffer, &command)?,
         Some("a") => append(buffer, &command)?,
         Some("c") => correct(buffer, &command)?,
+        Some("d") => delete(buffer, &command)?,
         _ => REPLStatus::Continue,
     };
 

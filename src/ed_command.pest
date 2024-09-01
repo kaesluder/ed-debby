@@ -10,11 +10,19 @@ address = { current | last | absolute }
 
 range_separator = { ";" | "," }
 
+range_all = { "%" | "," }
+
 range = ${
-    address* ~ range_separator* ~ address*
+    ( address ~ range_separator ~ address ) |
+    ( range_separator ~ address ) |
+    ( address ~ range_separator ) |
+    ( address ) |
+    range_all |
+    ""
 }
 
-command = { "wq" | "w" | "q" | "p" | "i" | "a" | "c" | "=" }
+command = { "wq" | "w" | "q" | "p" | "i" | "a" | "c" | "=" |
+            "d" }
 
 arg = { ANY+ }
 

@@ -8,7 +8,6 @@ use crate::buffer::line_array_buffer::LineBuffer;
 use crate::ed_command_parser::{Address, EdCommand};
 use crate::ed_commands::*;
 use crate::input_mode::input_mode;
-use std::error::Error;
 
 /// Inserts a vector of lines into the `LineBuffer` before the specified location.
 ///
@@ -190,8 +189,8 @@ pub fn delete_from_buffer(
             buffer_lines.splice(index1..index2 + 1, vec![]);
         }
     };
-    // set current line to end of inserted text.
-    buffer.current_line = index2 + 1;
+    // set current line to beginning of deleted range.
+    buffer.current_line = index1;
     Ok(buffer.current_line)
 }
 
