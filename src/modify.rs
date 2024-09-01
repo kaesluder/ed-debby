@@ -335,12 +335,24 @@ mod tests {
         let address2 = Address::Absolute(2);
         let actual = delete_from_buffer(&mut buffer, &address1, &address2)
             .expect("Unable to change buffer.");
-        assert_eq!(actual, 2);
+        assert_eq!(actual, 1);
         assert_eq!(buffer.lines.as_ref().unwrap().len(), 4);
         assert_eq!(buffer.lines.as_ref().unwrap()[0], "one".to_string());
         assert_eq!(buffer.lines.as_ref().unwrap()[1], "three".to_string());
         assert_eq!(buffer.lines.as_ref().unwrap()[2], "four".to_string());
         assert_eq!(buffer.lines.as_ref().unwrap()[3], "five".to_string());
+    }
+
+    #[rstest]
+    fn test_delete_all(test_file1: &LineBuffer) {
+        // copy buffer to avoid clobbering original data
+        let mut buffer = test_file1.clone();
+        let address1 = Address::Absolute(1);
+        let address2 = Address::Last;
+        let actual = delete_from_buffer(&mut buffer, &address1, &address2)
+            .expect("Unable to change buffer.");
+        assert_eq!(actual, 0);
+        assert_eq!(buffer.lines.as_ref().unwrap().len(), 0);
     }
 
     #[rstest]
