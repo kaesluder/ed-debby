@@ -27,25 +27,13 @@ Start edit by reading in 'file' if given.
 If 'file' begins with a '!', read output of shell command.
 ";
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Default)]
 pub struct EdArgs {
     pub filename: Option<String>,
     pub prompt: Option<String>,
     pub verbose: bool,
     pub debug: bool,
     pub help: bool,
-}
-
-impl Default for EdArgs {
-    fn default() -> Self {
-        EdArgs {
-            filename: None,
-            prompt: None,
-            verbose: false,
-            debug: false,
-            help: false,
-        }
-    }
 }
 
 pub fn parse_args(arg_list: Vec<OsString>) -> Result<EdArgs, pico_args::Error> {

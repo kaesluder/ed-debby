@@ -1,5 +1,7 @@
-use pest::{error::Error, Parser};
+use pest::Parser;
 use pest_derive::Parser;
+
+use crate::ed_commands::EdCommandError;
 
 #[derive(Parser)]
 #[grammar = "ed_command.pest"] // Adjust the grammar path as necessary
@@ -105,7 +107,7 @@ impl EdCommand {
 /// # Arguments
 ///
 /// * `input` - A string slice that holds the input to be parsed. This input should represent
-/// a range in the form of two addresses separated by a comma (`,`), semicolon (`;`), or no separator.
+///     a range in the form of two addresses separated by a comma (`,`), semicolon (`;`), or no separator.
 ///
 /// # Returns
 ///
@@ -126,8 +128,9 @@ impl EdCommand {
 /// conform to the expected format for a range, which is defined by the `Rule::range` in the `pest` parser.
 fn parse_range(
     input: &str,
-) -> Result<(Address, RangeSep, Address), Error<crate::ed_command_parser::Rule>> {
-    let pairs = EdCommandParser::parse(Rule::range, input)?
+) -> Result<(Address, RangeSep, Address), EdCommandError> {
+    let pairs = EdCommandParser::parse(Rule::range, input)
+        .map_err(|e| EdCommandError::ParseError(Box::new(e)))?
         .next()
         .unwrap()
         .into_inner();
@@ -181,8 +184,9 @@ fn parse_range(
 
 pub fn parse_line(
     input: &str,
-) -> Result<EdCommand, Error<crate::ed_command_parser::Rule>> {
-    let pairs = EdCommandParser::parse(Rule::line, input)?
+) -> Result<EdCommand, EdCommandError> {
+    let pairs = EdCommandParser::parse(Rule::line, input)
+        .map_err(|e| EdCommandError::ParseError(Box::new(e)))?
         .next()
         .unwrap()
         .into_inner();
@@ -253,7 +257,7 @@ mod tests {
         #[case] input: &str,
         #[case] expected: (Address, RangeSep, Address),
         #[case] note: &str,
-    ) -> Result<(), Error<Rule>> {
+    ) -> Result<(), EdCommandError> {
         let range = parse_range(input)?;
         assert_eq!(range, expected, "{}", note);
         Ok(())

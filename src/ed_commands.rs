@@ -1,5 +1,5 @@
 use crate::buffer::line_array_buffer::LineBuffer;
-use crate::ed_command_parser::{Address, EdCommand};
+use crate::ed_command_parser::{Address, EdCommand, Rule};
 use crate::modify::*;
 use std::fmt;
 
@@ -16,6 +16,7 @@ pub enum EdCommandError {
     InvalidRange,
     EmptyBuffer,
     InputModeError(rustyline::error::ReadlineError),
+    ParseError(Box<pest::error::Error<Rule>>),
 }
 
 /// Automatically wrap ReadLineError in an EdCommandError
@@ -33,6 +34,7 @@ impl fmt::Display for EdCommandError {
             EdCommandError::InvalidRange => write!(f, "Invalid Range"),
             EdCommandError::EmptyBuffer => write!(f, "Empty Buffer"),
             EdCommandError::InputModeError(ref e) => write!(f, "Input Error: {}", e),
+            EdCommandError::ParseError(ref e) => write!(f, "Parse Error: {}", e),
         }
     }
 }
@@ -40,7 +42,10 @@ impl fmt::Display for EdCommandError {
 impl std::error::Error for EdCommandError {
     /// Returns the source of the error, if any. In this case, no underlying error is wrapped, so it returns `None`.
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        None
+        match *self {
+            EdCommandError::ParseError(ref e) => Some(e),
+            _ => None,
+        }
     }
 }
 
