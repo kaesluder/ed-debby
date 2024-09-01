@@ -33,7 +33,7 @@ It probably won't be possible to get full compatibility, particularly in the are
 - TODO `+` - Moves to the next line. This is equivalent to +1 and may be repeated with cumulative effect.
 - TODO `+n` - Moves to the nth next line, where n is a non-negative number.
 - `,` or `%` - Selects the first through last lines in the buffer. This is equivalent to the address range 1,$.
-- TODO `;` - Selects from the current through last lines in the buffer. This is equivalent to the address range .,$.
+- `;` - Selects from the current through last lines in the buffer. This is equivalent to the address range .,$.
 - TODO `/re/` - Searches for the next line containing the regular expression `re`. The search wraps to the beginning of the buffer and continues down to the current line, if necessary. The second slash can be omitted if it ends a line. `//` repeats the last search.
 - TODO `?re?` - Searches for the previous line containing the regular expression `re`. The search wraps to the end of the buffer and continues up to the current line, if necessary. The second question mark can be omitted if it ends a line. `??` repeats the last search.
 - TODO `'lc` - Navigates to the line previously marked by a `k` (mark) command, where `lc` is a lowercase letter.

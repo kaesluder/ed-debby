@@ -160,6 +160,12 @@ fn parse_range(
                 address2 = Address::Last;
             }
 
+            Rule::range_current_to_last => {
+                address1 = Address::Current;
+                separator = RangeSep::Semicolon;
+                address2 = Address::Last;
+            }
+
             _ => {}
         }
     }
@@ -241,6 +247,7 @@ mod tests {
     #[case(".,$", (Address::Current, RangeSep::Comma, Address::Last), "num,")]
     #[case("10;20", (Address::Absolute(10), RangeSep::Semicolon, Address::Absolute(20)), "num,")]
     #[case("", (Address::Current, RangeSep::Comma, Address::Current), "empty string")]
+    #[case(";", (Address::Current, RangeSep::Semicolon, Address::Last), "; (current->end)")]
     #[case("%", (Address::Absolute(1), RangeSep::Comma, Address::Last), "% (all lines)")]
     fn test_parameterized_range_parse(
         #[case] input: &str,

@@ -11,6 +11,7 @@ address = { current | last | absolute }
 range_separator = { ";" | "," }
 
 range_all = { "%" | "," }
+range_current_to_last = { ";" }
 
 range = ${
     ( address ~ range_separator ~ address ) |
@@ -18,7 +19,9 @@ range = ${
     ( address ~ range_separator ) |
     ( address ) |
     range_all |
-    ""
+    range_current_to_last | 
+    "" 
+    
 }
 
 command = { "wq" | "w" | "q" | "p" | "i" | "a" | "c" | "=" |
