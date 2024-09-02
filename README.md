@@ -49,7 +49,7 @@ It probably won't be possible to get full compatibility, particularly in the are
 
 ### Display Commands
 - `(.,.)p`: Prints the addressed lines.
-- TODO `(.,.)n`: Prints the addressed lines with their line numbers.
+- `(.,.)n`: Prints the addressed lines with their line numbers.
 - TODO `(.,.)l`: Prints the addressed lines unambiguously.
 
 ### File Operations

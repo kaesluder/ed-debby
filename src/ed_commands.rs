@@ -141,6 +141,7 @@ pub fn command_runner(
         Some("a") => append(buffer, &command)?,
         Some("c") => correct(buffer, &command)?,
         Some("d") => delete(buffer, &command)?,
+        Some("n") => print_with_numbers(buffer, &command)?,
         _ => REPLStatus::Continue,
     };
 
@@ -238,6 +239,42 @@ fn print(buffer: &mut LineBuffer, command: &EdCommand) -> Result<REPLStatus, Box
         Some(lines) => {
             for i in low..=high {
                 println!("{}", lines[i])
+            }
+        }
+        None => println!(""),
+    };
+    Ok(REPLStatus::Continue)
+}
+
+/// Prints the lines within the specified range from the `LineBuffer`
+/// each line prefixed with its line number.
+/// If the buffer is empty or the specified range is invalid,
+/// it returns an appropriate error.
+///
+/// # Arguments
+///
+/// * `buffer` - A reference to the `LineBuffer`, which holds the lines of text being edited.
+/// * `command` - A reference to the `EdCommand`, containing the addresses that specify the range of lines to print.
+///
+/// # Returns
+///
+/// * `Result<REPLStatus, Box<dyn Error>>` - Returns `Ok(REPLStatus::Continue)` on success, otherwise an error wrapped in a `Box<dyn Error>`.
+fn print_with_numbers(
+    buffer: &LineBuffer,
+    command: &EdCommand,
+) -> Result<REPLStatus, Box<dyn Error>> {
+    if buffer.len() == 0 {
+        return Err(Box::new(EdCommandError::EmptyBuffer));
+    }
+    let low = address_to_index(command.address1.clone(), buffer);
+    let high = address_to_index(command.address2.clone(), buffer);
+    if low > high {
+        return Err(Box::new(EdCommandError::InvalidRange));
+    }
+    match &buffer.lines {
+        Some(lines) => {
+            for i in low..=high {
+                println!("{:>4}\t{}", i + 1, lines[i]);
             }
         }
         None => println!(""),
@@ -399,5 +436,52 @@ mod tests {
         buffer.current_line = current;
         let actual_index = address_to_index(Address::Current, &buffer);
         assert_eq!(actual_index, expected);
+    }
+
+    #[test]
+    fn test_print_with_numbers_empty_buffer() {
+        let buffer = LineBuffer::empty();
+        let command = EdCommand {
+            command: Some("p".to_string()),
+            address1: Address::Absolute(1),
+            address2: Address::Absolute(1),
+            ..EdCommand::default()
+        };
+
+        let result = print_with_numbers(&buffer, &command);
+
+        assert!(result.is_err());
+        if let Err(ref e) = result {
+            assert_eq!(format!("{}", e), format!("{}", EdCommandError::EmptyBuffer));
+        }
+    }
+
+    #[test]
+    fn test_print_with_numbers_invalid_range() {
+        let buffer = LineBuffer {
+            lines: Some(vec![
+                "line one".to_string(),
+                "line two".to_string(),
+                "line three".to_string(),
+            ]),
+            ..LineBuffer::empty()
+        };
+
+        let command = EdCommand {
+            command: Some("p".to_string()),
+            address1: Address::Absolute(3),
+            address2: Address::Absolute(1),
+            ..EdCommand::default()
+        };
+
+        let result = print_with_numbers(&buffer, &command);
+
+        assert!(result.is_err());
+        if let Err(ref e) = result {
+            assert_eq!(
+                format!("{}", e),
+                format!("{}", EdCommandError::InvalidRange)
+            );
+        }
     }
 }

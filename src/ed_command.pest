@@ -25,7 +25,7 @@ range = ${
 }
 
 command = { "wq" | "w" | "q" | "p" | "i" | "a" | "c" | "=" |
-            "d" }
+            "d" | "n"}
 
 arg = { ANY+ }
 
