@@ -35,8 +35,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             Ok(line) => {
                 rl.add_history_entry(line.as_str())?;
                 let command = ed_command_parser::parse_line(line.as_str())?;
-
-                println!("{:#?}", command);
+                if config.diagnostics {
+                    println!("{:#?}", command);
+                }
                 let result_or_err = ed_commands::command_runner(&mut buffer, &command);
                 let result = match result_or_err {
                     Ok(result) => result,

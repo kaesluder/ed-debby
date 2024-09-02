@@ -79,7 +79,7 @@ fn validate_range(buffer: &mut LineBuffer, command: &EdCommand) -> Result<(), Ed
         buffer.current_line = buffer.len();
     }
 
-    println!("{}, {}", buffer.current_line, buffer.len());
+    // println!("{}, {}", buffer.current_line, buffer.len());
 
     let address1 = match command.address1.clone() {
         Address::Current => Address::Absolute(buffer.current_line),

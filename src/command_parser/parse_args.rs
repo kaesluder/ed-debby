@@ -34,6 +34,7 @@ pub struct EdArgs {
     pub verbose: bool,
     pub debug: bool,
     pub help: bool,
+    pub diagnostics: bool,
 }
 
 pub fn parse_args(arg_list: Vec<OsString>) -> Result<EdArgs, pico_args::Error> {
@@ -48,12 +49,15 @@ pub fn parse_args(arg_list: Vec<OsString>) -> Result<EdArgs, pico_args::Error> {
         });
     }
 
+    let diagnostics = pargs.contains("--diagnostics");
+
     let args = EdArgs {
         prompt: pargs.opt_value_from_str(["-p", "--prompt"])?,
         debug: false,
         verbose: false,
         filename: pargs.opt_free_from_str()?,
         help: false,
+        diagnostics,
     };
 
     // It's up to the caller what to do with the remaining arguments.
