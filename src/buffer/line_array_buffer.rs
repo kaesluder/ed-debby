@@ -23,18 +23,26 @@ impl LineBuffer {
 
     // Constructor to create LineBuffer from a file
     pub fn from_file(filename: &str) -> Result<Self, std::io::Error> {
-        use std::fs::File;
+        use std::fs::{metadata, File};
         use std::io::{BufRead, BufReader};
 
-        let file = File::open(filename)?;
-        let reader = BufReader::new(file);
-        let lines: Vec<String> = reader.lines().collect::<Result<_, _>>()?;
+        match metadata(filename) {
+            Ok(_) => {
+                let file = File::open(filename)?;
+                let reader = BufReader::new(file);
+                let lines: Vec<String> = reader.lines().collect::<Result<_, _>>()?;
 
-        Ok(LineBuffer {
-            filename: Some(filename.to_string()),
-            lines: Some(lines),
-            current_line: 0,
-        })
+                Ok(LineBuffer {
+                    filename: Some(filename.to_string()),
+                    lines: Some(lines),
+                    current_line: 0,
+                })
+            }
+            Err(_) => Ok(LineBuffer {
+                filename: Some(filename.to_string()),
+                ..Self::empty()
+            }),
+        }
     }
 
     // Save the lines to a file
