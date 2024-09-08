@@ -1,7 +1,7 @@
 use pest::Parser;
 use pest_derive::Parser;
 
-use crate::ed_commands::EdCommandError;
+use crate::ed_command_error::EdCommandError;
 
 #[derive(Parser)]
 #[grammar = "ed_command.pest"] // Adjust the grammar path as necessary

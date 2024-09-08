@@ -1,5 +1,5 @@
-use crate::ed_commands::EdCommandError;
 use rustyline::error::ReadlineError;
+use crate::ed_command_error::EdCommandError;
 
 pub fn input_mode() -> Result<Vec<String>, EdCommandError> {
     let mut rl = rustyline::DefaultEditor::new()?;
