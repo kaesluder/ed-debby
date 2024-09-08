@@ -6,7 +6,7 @@
 
 use crate::buffer::line_array_buffer::LineBuffer;
 use crate::ed_command_error::EdCommandError;
-use crate::ed_command_parser::{Address, EdCommand};
+use crate::command_structs::{Address, EdCommand};
 use crate::ed_commands::*;
 use crate::input_mode::input_mode;
 

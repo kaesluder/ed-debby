@@ -5,6 +5,7 @@ mod ed_commands;
 mod input_mode;
 mod modify;
 mod ed_command_error;
+mod command_structs;
 
 use crate::buffer::line_array_buffer::LineBuffer;
 use crate::command_parser::parse_args::parse_args;
